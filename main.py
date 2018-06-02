@@ -54,9 +54,11 @@ class DbTooling():
     def create_db(self, xml_data, section):
         # prepare data
         fields = []
+        fieldsn = []
         values = []
         for k in xml_data[0]:
             fields.append(k + ' integer')
+            fieldsn.append(k)
 
         for k in xml_data:
             values.append(tuple(k.values()))
@@ -64,7 +66,7 @@ class DbTooling():
         # first need to drop and create new db every time
         sql_drop_statement = '''DROP TABLE IF EXISTS {table_name};'''.format(table_name=section)
         sql_create_statement = '''CREATE TABLE {table_name} ({fields});'''.format(
-            table_name=section, fields=fields)
+            table_name=section, fields=', '.join(fields))
         try:
             self.cursor.execute(sql_drop_statement)
             self.cursor.execute(sql_create_statement)
@@ -74,9 +76,10 @@ class DbTooling():
         # insert each row
         for x in values:
             sql_insert_statement = '''INSERT INTO {table_name} ({fields})'''.format(
-                table_name=section, fields=', '.join(fields)) + ''' VALUES {values}'''.format(values=(tuple(x)))
+                table_name=section, fields=', '.join(fieldsn)) + ''' VALUES {values}'''.format(values=(tuple(x)))
+            print(sql_insert_statement)
             try:
-                self.cursor.execute(print(sql_insert_statement))
+                self.cursor.execute(sql_insert_statement)
             except sqlite3.DatabaseError as err:
                 print("Error: ", err)
 
