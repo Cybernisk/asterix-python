@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 import requests
 import asyncio
+import aiohttp
 from configparser import ConfigParser
 import argparse
 import os
@@ -23,7 +24,6 @@ def parse_xml(xml_data, sitename, section, db_tools):
             for key in row:
                 pre_dict[key.tag] = key.text
             result.append(pre_dict)
-        print(result)
         return result
 
 
@@ -77,7 +77,6 @@ class DbTooling():
         for x in values:
             sql_insert_statement = '''INSERT INTO {table_name} ({fields})'''.format(
                 table_name=section, fields=', '.join(fieldsn)) + ''' VALUES {values}'''.format(values=(tuple(x)))
-            print(sql_insert_statement)
             try:
                 self.cursor.execute(sql_insert_statement)
             except sqlite3.DatabaseError as err:
@@ -104,6 +103,12 @@ def download_xml_file(config, section, db_tools):
     else:
         return response.text
 
+@asyncio.coroutine
+def routine(config, section, db_tools):
+    xlm_response = download_xml_file(config, section, db_tools)
+    if xlm_response:
+        xlm_parsed = parse_xml(xlm_response, config[section]['name'], section, db_tools)
+        db_tools.create_db(xlm_parsed, section)
 
 def process(opts):
     """
@@ -123,15 +128,16 @@ def process(opts):
     db_tools = DbTooling(config)
 
     # use process only for www_ sections
+    sections = []
     for section in config.sections():
         if not section.startswith('www_'):
             continue
+        sections.append(section)
+        # routine(config, section, db_tools)
 
-        # TODO: make this past async
-        xlm_response = download_xml_file(config, section, db_tools)
-        if xlm_response:
-            xlm_parsed = parse_xml(xlm_response, config[section]['name'], section, db_tools)
-            db_tools.create_db(xlm_parsed, section)
+    exe_looper = [routine(config, section, db_tools) for section in sections]
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(asyncio.wait(exe_looper))
 
 def main():
     parser = argparse.ArgumentParser()
