@@ -1,7 +1,6 @@
 import xml.etree.ElementTree as ET
 import requests
 import asyncio
-import aiohttp
 from configparser import ConfigParser
 import argparse
 import os
@@ -13,8 +12,6 @@ import mysql.connector
 
 def parse_xml(xml_data, sitename, section, db_tools):
     result = []
-
-    # root = ET.parse(filename).getroot()
     root = ET.fromstring(xml_data)
     if root.find('./header/name').text != sitename:
         db_tools.drop_db_on_error(section)
@@ -103,12 +100,14 @@ def download_xml_file(config, section, db_tools):
     else:
         return response.text
 
+
 @asyncio.coroutine
 def routine(config, section, db_tools):
     xlm_response = download_xml_file(config, section, db_tools)
     if xlm_response:
         xlm_parsed = parse_xml(xlm_response, config[section]['name'], section, db_tools)
-        db_tools.create_db(xlm_parsed, section)
+        if xlm_parsed:
+            db_tools.create_db(xlm_parsed, section)
 
 def process(opts):
     """
@@ -135,9 +134,9 @@ def process(opts):
         sections.append(section)
         # routine(config, section, db_tools)
 
-    exe_looper = [routine(config, section, db_tools) for section in sections]
+    future = [routine(config, section, db_tools) for section in sections]
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.wait(exe_looper))
+    loop.run_until_complete(asyncio.wait(future))
 
 def main():
     parser = argparse.ArgumentParser()
