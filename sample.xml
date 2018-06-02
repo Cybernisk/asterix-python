@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<data>
+	<header>
+		<name>MTS</name>
+		<type>1;month;1</type>
+		<countRec>1</countRec>
+		<countActive>1</countActive>
+	</header>
+	<rows>
+	<row>
+		<pref>7812</pref>
+		<did>3844292</did>
+		<dnid>0987654321</dnid>
+		<chen>1</chen>
+		<num>1234567890</num>
+		<inter>1</inter>
+	</row>
+	<row>
+		<pref>7495</pref>
+		<did>4441123</did>
+		<dnid>1234567890</dnid>
+		<chen>2</chen>
+		<num>098765431</num>
+		<inter>2</inter>
+	</row>
+	</rows>
+</data>
